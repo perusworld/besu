@@ -431,6 +431,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     localNode.setEnode(localEnode);
   }
 
+  @Override
+  public void updateNodeRecord() {
+    peerDiscoveryAgent.updateNodeRecord();
+  }
+
   public static class Builder {
 
     private Vertx vertx;
