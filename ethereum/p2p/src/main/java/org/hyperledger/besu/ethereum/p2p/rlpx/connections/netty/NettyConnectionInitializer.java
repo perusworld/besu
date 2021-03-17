@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.ssl.SslContextFactory;
+import org.hyperledger.besu.ethereum.p2p.ssl.config.SSLConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
@@ -31,6 +33,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,6 +51,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,6 +65,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
   private final PeerConnectionEventDispatcher eventDispatcher;
   private final MetricsSystem metricsSystem;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
+  private final Optional<SSLConfiguration> p2pSSLConfiguration;
 
   private ChannelFuture server;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
@@ -73,12 +78,14 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
       final RlpxConfiguration config,
       final LocalNode localNode,
       final PeerConnectionEventDispatcher eventDispatcher,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<SSLConfiguration> p2pSSLConfiguration) {
     this.nodeKey = nodeKey;
     this.config = config;
     this.localNode = localNode;
     this.eventDispatcher = eventDispatcher;
     this.metricsSystem = metricsSystem;
+    this.p2pSSLConfiguration = p2pSSLConfiguration;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -258,12 +265,20 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
 
   private void addAdditionalOutboundHandlers(final SocketChannel ch)
       throws GeneralSecurityException, IOException {
-    if (null != ch) {}
+    if (p2pSSLConfiguration.isPresent()) {
+      SslContext sslContext =
+          SslContextFactory.buildFrom(p2pSSLConfiguration.get()).createNettyClientSslContext();
+      ch.pipeline().addLast(sslContext.newHandler(ch.alloc()));
+    }
   }
 
   private void addAdditionalInboundHandlers(final SocketChannel ch)
       throws GeneralSecurityException, IOException {
-    if (null != ch) {}
+    if (p2pSSLConfiguration.isPresent()) {
+      SslContext sslContext =
+          SslContextFactory.buildFrom(p2pSSLConfiguration.get()).createNettyServerSslContext();
+      ch.pipeline().addLast(sslContext.newHandler(ch.alloc()));
+    }
   }
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {

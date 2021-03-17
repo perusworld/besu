@@ -222,7 +222,8 @@ public class SslContextFactory {
     return Arrays.stream(ALLOWED_PROTOCOLS).max(Comparator.naturalOrder()).orElse(null);
   }
 
-  public static SslContextFactory buildFrom(final SSLConfiguration config) throws Exception {
+  public static SslContextFactory buildFrom(final SSLConfiguration config)
+      throws GeneralSecurityException, IOException {
     SslContextFactory ret = null;
     if (null != config) {
       KeyStoreWrapper wrapper =

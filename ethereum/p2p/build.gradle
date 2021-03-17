@@ -31,6 +31,7 @@ dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
+  implementation project(':ethereum:p2p-ssl')
   implementation project(':metrics:core')
   implementation project(':nat')
 

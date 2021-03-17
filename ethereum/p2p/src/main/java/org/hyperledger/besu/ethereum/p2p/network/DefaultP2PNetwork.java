@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.ethereum.p2p.ssl.config.SSLConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
@@ -449,6 +450,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
     private Supplier<List<Bytes>> forkIdSupplier;
+    private Optional<SSLConfiguration> p2pSSLConfiguration = Optional.empty();
 
     public P2PNetwork build() {
       validate();
@@ -515,6 +517,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .localNode(localNode)
           .metricsSystem(metricsSystem)
           .randomPeerPriority(randomPeerPriority)
+          .p2pSSLConfiguration(p2pSSLConfiguration)
           .build();
     }
 
@@ -597,6 +600,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
       checkNotNull(forkIdSupplier);
       this.forkIdSupplier = forkIdSupplier;
+      return this;
+    }
+
+    public Builder p2pSSLConfiguration(final Optional<SSLConfiguration> p2pSSLConfiguration) {
+      checkNotNull(p2pSSLConfiguration);
+      this.p2pSSLConfiguration = p2pSSLConfiguration;
       return this;
     }
   }

@@ -113,6 +113,7 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
+import org.hyperledger.besu.ethereum.p2p.ssl.config.SSLConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -1088,6 +1089,57 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the static node file containing the static nodes for this node to connect to")
   private final Path staticNodesFile = null;
 
+  @Option(
+      names = {"--p2p-ssl-enabled"},
+      description = "Enable P2P SSL functionality (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean p2pSSLEnabled = false;
+
+  @SuppressWarnings({
+    "FieldCanBeFinal",
+    "FieldMayBeFinal"
+  }) // p2pSSLKeyStoreType requires non-final Strings.
+  @Option(
+      names = {"--p2p-ssl-keystore-type"},
+      paramLabel = "<NAME>",
+      description = "P2P service keystore type. Required if P2P SSL is enabled.")
+  private String p2pSSLKeyStoreType = DEFAULT_KEYSTORE_TYPE;
+
+  @Option(
+      names = {"--p2p-ssl-keystore-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Keystore containing key/certificate for the P2P service.")
+  private final Path p2pSSLKeyStoreFile = null;
+
+  @Option(
+      names = {"--p2p-ssl-keystore-password-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "File containing password to unlock keystore for the P2P service. Required if P2P SSL is enabled.")
+  private final Path p2pSSLKeyStorePasswordFile = null;
+
+  @SuppressWarnings({
+    "FieldCanBeFinal",
+    "FieldMayBeFinal"
+  }) // p2pSSLTrustStoreType requires non-final Strings.
+  @Option(
+      names = {"--p2p-ssl-truststore-type"},
+      paramLabel = "<NAME>",
+      description = "P2P service truststore type.")
+  private String p2pSSLTrustStoreType = DEFAULT_KEYSTORE_TYPE;
+
+  @Option(
+      names = {"--p2p-ssl-truststore-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Truststore containing trusted certificates for the P2P service.")
+  private final Path p2pSSLTrustStoreFile = null;
+
+  @Option(
+      names = {"--p2p-ssl-truststore-password-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "File containing password to unlock truststore for the P2P service.")
+  private final Path p2pSSLTrustStorePasswordFile = null;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1095,6 +1147,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
+  private Optional<SSLConfiguration> p2pSSLConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
@@ -1334,6 +1387,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     synchronize(
         besuController,
         p2pEnabled,
+        p2pSSLConfiguration,
         peerDiscoveryEnabled,
         ethNetworkConfig,
         maxPeers,
@@ -1397,6 +1451,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
+
+    checkP2PSSLOptionsDependencies();
 
     return this;
   }
@@ -1539,6 +1595,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       checkGoQuorumCompatibilityConfig(ethNetworkConfig);
     }
     jsonRpcConfiguration = jsonRpcConfiguration();
+    p2pSSLConfiguration = p2pSSLConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
     apiConfiguration = apiConfiguration();
@@ -2224,6 +2281,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
+      final Optional<SSLConfiguration> p2pSSLConfiguration,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final int maxPeers,
@@ -2242,6 +2300,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     checkNotNull(runnerBuilder);
 
     permissioningConfiguration.ifPresent(runnerBuilder::permissioningConfiguration);
+    p2pSSLConfiguration.ifPresent(runnerBuilder::p2pSSLConfiguration);
 
     final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
@@ -2515,6 +2574,45 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       enodeDnsConfiguration = unstableDnsOptions.toDomainObject();
     }
     return enodeDnsConfiguration;
+  }
+
+  private void checkP2PSSLOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--p2p-ssl-enabled",
+        !p2pSSLEnabled,
+        asList("--p2p-ssl-keystore-type", "--p2p-ssl-keystore-password-file"));
+  }
+
+  private Optional<SSLConfiguration> p2pSSLConfiguration() {
+    if (!p2pSSLEnabled) {
+      return Optional.empty();
+    }
+
+    if (p2pSSLKeyStoreType == null) {
+      throw new ParameterException(
+          commandLine, "Keystore type is required when p2p SSL is enabled");
+    }
+
+    if (p2pSSLKeyStorePasswordFile == null) {
+      throw new ParameterException(
+          commandLine,
+          "File containing password to unlock keystore is required when p2p SSL is enabled");
+    }
+
+    return Optional.of(
+        SSLConfiguration.Builder.aSSLConfiguration()
+            .withKeyStoreType(p2pSSLKeyStoreType)
+            .withKeyStorePath(p2pSSLKeyStoreFile)
+            .withKeyStorePasswordSupplier(new FileBasedPasswordProvider(p2pSSLKeyStorePasswordFile))
+            .withTrustStoreType(p2pSSLTrustStoreType)
+            .withTrustStorePath(p2pSSLTrustStoreFile)
+            .withTrustStorePasswordSupplier(
+                null == p2pSSLTrustStorePasswordFile
+                    ? null
+                    : new FileBasedPasswordProvider(p2pSSLTrustStorePasswordFile))
+            .build());
   }
 
   private void checkPortClash() {
