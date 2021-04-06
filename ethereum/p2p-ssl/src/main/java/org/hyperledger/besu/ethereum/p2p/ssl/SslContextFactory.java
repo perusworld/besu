@@ -226,6 +226,7 @@ public class SslContextFactory {
       throws GeneralSecurityException, IOException {
     SslContextFactory ret = null;
     if (null != config) {
+      LOG.info("Initializing SSL Context using {} keystore.", config.getKeyStoreType());
       KeyStoreWrapper wrapper =
           PKCS11.equalsIgnoreCase(config.getKeyStoreType())
               ? new HardwareKeyStoreWrapper(config.getKeyStorePassword(), config.getKeyStorePath())

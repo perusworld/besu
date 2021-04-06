@@ -1089,8 +1089,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--p2p-ssl-enabled"},
-      description = "Enable P2P SSL functionality (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Enable P2P SSL functionality (default: ${DEFAULT-VALUE})")
   private final Boolean p2pSSLEnabled = false;
 
   @SuppressWarnings({
