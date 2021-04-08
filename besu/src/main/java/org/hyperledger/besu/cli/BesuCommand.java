@@ -1087,6 +1087,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the static node file containing the static nodes for this node to connect to")
   private final Path staticNodesFile = null;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--discovery-dns-url"},
+      description = "Specifies the URL to use for DNS discovery")
+  private String discoveryDnsUrl = null;
+
   @Option(
       names = {"--p2p-ssl-enabled"},
       description = "Enable P2P SSL functionality (default: ${DEFAULT-VALUE})")
@@ -2460,6 +2466,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
+    }
+
+    if (discoveryDnsUrl != null) {
+      builder.setDnsDiscoveryUrl(discoveryDnsUrl);
     }
 
     if (networkId != null) {
