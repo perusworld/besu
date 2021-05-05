@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 
 public class SSLConfiguration {
+
   private final String keyStoreType;
   private final Path keyStorePath;
   private final Supplier<String> keyStorePasswordSupplier;
@@ -64,7 +65,7 @@ public class SSLConfiguration {
   }
 
   public String getTrustStorePassword() {
-    return trustStorePasswordSupplier.get();
+    return null == trustStorePasswordSupplier ? null : trustStorePasswordSupplier.get();
   }
 
   public static final class Builder {

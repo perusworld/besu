@@ -21,6 +21,10 @@ import java.security.cert.Certificate;
 
 public interface KeyStoreWrapper {
 
+  public static final String KEYSTORE_TYPE_JKS = "JKS";
+  public static final String KEYSTORE_TYPE_PKCS11 = "PKCS11";
+  public static final String KEYSTORE_TYPE_PKCS12 = "PKCS12";
+
   KeyStore getKeyStore();
 
   KeyStore getTrustStore();

@@ -44,7 +44,6 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
 
   private final KeyStore keystore;
   private final transient char[] keystorePassword;
-  private final String keystoreType = "PKCS11";
   private final String pkcs11Provider = "SunPKCS11";
 
   private final java.security.Provider provider;
@@ -61,7 +60,7 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
         Security.addProvider(provider);
       }
 
-      keystore = KeyStore.getInstance(keystoreType, provider);
+      keystore = KeyStore.getInstance(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, provider);
       keystore.load(null, this.keystorePassword);
 
     } catch (final Exception e) {
@@ -92,7 +91,7 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
         Security.addProvider(provider);
       }
 
-      keystore = KeyStore.getInstance(keystoreType, provider);
+      keystore = KeyStore.getInstance(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, provider);
       keystore.load(null, this.keystorePassword);
 
     } catch (final Exception e) {

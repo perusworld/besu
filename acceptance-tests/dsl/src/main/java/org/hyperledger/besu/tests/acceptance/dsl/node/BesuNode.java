@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.ssl.config.SSLConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
@@ -87,6 +88,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final KeyPair keyPair;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
+  private final Optional<SSLConfiguration> sslConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
 
@@ -130,6 +132,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final Optional<SSLConfiguration> sslConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -163,6 +166,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.devMode = devMode;
     this.network = network;
     this.p2pEnabled = p2pEnabled;
+    this.sslConfiguration = sslConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -552,6 +556,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public boolean isP2pEnabled() {
     return p2pEnabled;
+  }
+
+  public Optional<SSLConfiguration> getSSLConfiguration() {
+    return sslConfiguration;
   }
 
   public NetworkingConfiguration getNetworkingConfiguration() {

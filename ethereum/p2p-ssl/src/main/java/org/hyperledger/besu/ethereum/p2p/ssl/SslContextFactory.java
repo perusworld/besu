@@ -44,7 +44,6 @@ public class SslContextFactory {
 
   private static final String[] ALLOWED_PROTOCOLS = {"TLSv1.3"};
   private static final String KEYMANAGER_FACTORY_ALGORITHM = "PKIX";
-  private static final String PKCS11 = "PKCS11";
   private static final String TRUSTMANAGER_FACTORY_ALGORITHM = "PKIX";
   private static List<String> enabledCipherSuites =
       null; // cache enabled cipher suites for chosen (most recent)
@@ -228,7 +227,7 @@ public class SslContextFactory {
     if (null != config) {
       LOG.info("Initializing SSL Context using {} keystore.", config.getKeyStoreType());
       KeyStoreWrapper wrapper =
-          PKCS11.equalsIgnoreCase(config.getKeyStoreType())
+          KeyStoreWrapper.KEYSTORE_TYPE_PKCS11.equalsIgnoreCase(config.getKeyStoreType())
               ? new HardwareKeyStoreWrapper(config.getKeyStorePassword(), config.getKeyStorePath())
               : new SoftwareKeyStoreWrapper(
                   config.getKeyStoreType(),

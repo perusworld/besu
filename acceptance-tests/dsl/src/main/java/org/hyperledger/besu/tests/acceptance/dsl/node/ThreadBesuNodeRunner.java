@@ -197,6 +197,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .metricsSystem(metricsSystem)
             .metricsConfiguration(node.getMetricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
+            .p2pSSLConfiguration(node.getSSLConfiguration())
             .graphQLConfiguration(GraphQLConfiguration.createDefault())
             .staticNodes(
                 node.getStaticNodes().stream()

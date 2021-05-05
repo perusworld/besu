@@ -29,6 +29,24 @@ public class BftAcceptanceTestParameterization {
                 BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
           },
           new Object[] {
+            "ibft-ssl-jks",
+            new BftAcceptanceTestParameterization(
+                BesuNodeFactory::createIbft2NodeWithSSLJKS,
+                BesuNodeFactory::createIbft2SSLJKSNodeWithValidators)
+          },
+          new Object[] {
+            "ibft-ssl-pkcs12",
+            new BftAcceptanceTestParameterization(
+                BesuNodeFactory::createIbft2NodeWithSSLPKCS12,
+                BesuNodeFactory::createIbft2SSLPKCS12NodeWithValidators)
+          },
+          //          new Object[] {
+          //            "ibft-ssl-pkcs11",
+          //            new BftAcceptanceTestParameterization(
+          //                BesuNodeFactory::createIbft2NodeWithSSLPKCS11,
+          //                BesuNodeFactory::createIbft2SSLPKCS11NodeWithValidators)
+          //          },
+          new Object[] {
             "qbft",
             new BftAcceptanceTestParameterization(
                 BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)

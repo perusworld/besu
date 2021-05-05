@@ -195,6 +195,13 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder p2pSSLConfiguration(final Optional<SSLConfiguration> p2pSSLConfiguration) {
+    if (null != p2pSSLConfiguration) {
+      this.p2pSSLConfiguration = p2pSSLConfiguration;
+    }
+    return this;
+  }
+
   public RunnerBuilder discovery(final boolean discovery) {
     this.discovery = discovery;
     return this;

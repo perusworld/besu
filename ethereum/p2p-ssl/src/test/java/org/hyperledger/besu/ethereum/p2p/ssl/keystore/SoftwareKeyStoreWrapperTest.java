@@ -24,8 +24,6 @@ import org.junit.runners.Parameterized;
 
 public class SoftwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
 
-  private static final String PKCS12 = "PKCS12";
-  private static final String JKS = "JKS";
   private static final String p12KeyStore = "/keys/partner1client1/partner1client1.p12";
   private static final String jksKeyStore = "/keys/partner1client1/partner1client1.jks";
   private static final String trustStore = "/keys/partner1client1/partner1client1-truststore.jks";
@@ -55,7 +53,8 @@ public class SoftwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
 
   private static KeyStoreWrapper getPKCS12SoftwareKeyStoreWrapper() {
     try {
-      return new SoftwareKeyStoreWrapper(PKCS12, toPath(p12KeyStore), validKeystorePassword);
+      return new SoftwareKeyStoreWrapper(
+          KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, toPath(p12KeyStore), validKeystorePassword);
     } catch (final Exception e) {
       throw new CryptoRuntimeException("Failed to initialize software keystore", e);
     }
@@ -68,9 +67,15 @@ public class SoftwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
         final Path truststoreLocation = toPath(trustStore);
         // password shouldn't be needed for retrieving certificate from truststore
         return new SoftwareKeyStoreWrapper(
-            JKS, keystoreLocation, validKeystorePassword, JKS, truststoreLocation, null);
+            KeyStoreWrapper.KEYSTORE_TYPE_JKS,
+            keystoreLocation,
+            validKeystorePassword,
+            KeyStoreWrapper.KEYSTORE_TYPE_JKS,
+            truststoreLocation,
+            null);
       }
-      return new SoftwareKeyStoreWrapper(JKS, keystoreLocation, validKeystorePassword);
+      return new SoftwareKeyStoreWrapper(
+          KeyStoreWrapper.KEYSTORE_TYPE_JKS, keystoreLocation, validKeystorePassword);
     } catch (final Exception e) {
       throw new CryptoRuntimeException("Failed to initialize software keystore", e);
     }
