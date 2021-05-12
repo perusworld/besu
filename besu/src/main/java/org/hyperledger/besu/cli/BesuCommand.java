@@ -2624,12 +2624,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .withKeyStoreType(p2pSSLKeyStoreType)
             .withKeyStorePath(p2pSSLKeyStoreFile)
             .withKeyStorePasswordSupplier(new FileBasedPasswordProvider(p2pSSLKeyStorePasswordFile))
+            .withKeyStorePasswordPath(p2pSSLKeyStorePasswordFile)
             .withTrustStoreType(p2pSSLTrustStoreType)
             .withTrustStorePath(p2pSSLTrustStoreFile)
             .withTrustStorePasswordSupplier(
                 null == p2pSSLTrustStorePasswordFile
                     ? null
                     : new FileBasedPasswordProvider(p2pSSLTrustStorePasswordFile))
+            .withTrustStorePasswordPath(p2pSSLTrustStorePasswordFile)
             .build());
   }
 

@@ -33,13 +33,17 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import com.google.common.base.Charsets;
 
 public class BesuNodeConfigurationBuilder {
 
@@ -250,40 +254,43 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder p2pSSLEnabled(final String name, final String type) {
     final SSLConfiguration.Builder builder = SSLConfiguration.Builder.aSSLConfiguration();
     try {
+      final String nsspin = "/p2p-ssl/%s/nsspin.txt";
+      final String truststore = "/p2p-ssl/%s/truststore.jks";
       switch (type) {
         case KeyStoreWrapper.KEYSTORE_TYPE_JKS:
           builder
               .withKeyStoreType(type)
               .withKeyStorePath(toPath(String.format("/p2p-ssl/%s/keystore.jks", name)))
               .withKeyStorePasswordSupplier(
-                  new FileBasedPasswordProvider(
-                      toPath(String.format("/p2p-ssl/%s/nsspin.txt", name))))
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
               .withTrustStoreType(type)
-              .withTrustStorePath(toPath(String.format("/p2p-ssl/%s/truststore.jks", name)))
+              .withTrustStorePath(toPath(String.format(truststore, name)))
               .withTrustStorePasswordSupplier(
-                  new FileBasedPasswordProvider(
-                      toPath(String.format("/p2p-ssl/%s/nsspin.txt", name))));
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)));
           break;
         case KeyStoreWrapper.KEYSTORE_TYPE_PKCS12:
           builder
               .withKeyStoreType(type)
               .withKeyStorePath(toPath(String.format("/p2p-ssl/%s/keys.p12", name)))
               .withKeyStorePasswordSupplier(
-                  new FileBasedPasswordProvider(
-                      toPath(String.format("/p2p-ssl/%s/nsspin.txt", name))))
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
               .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_JKS)
-              .withTrustStorePath(toPath(String.format("/p2p-ssl/%s/truststore.jks", name)))
+              .withTrustStorePath(toPath(String.format(truststore, name)))
               .withTrustStorePasswordSupplier(
-                  new FileBasedPasswordProvider(
-                      toPath(String.format("/p2p-ssl/%s/nsspin.txt", name))));
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)));
           break;
         case KeyStoreWrapper.KEYSTORE_TYPE_PKCS11:
           builder
               .withKeyStoreType(type)
-              .withKeyStorePath(toPath(String.format("/p2p-ssl/%s/nss.cfg", name)))
+              .withKeyStorePath(
+                  initNSSConfigFile(toPath(String.format("/p2p-ssl/%s/nss.cfg", name))))
               .withKeyStorePasswordSupplier(
-                  new FileBasedPasswordProvider(
-                      toPath(String.format("/p2p-ssl/%s/nsspin.txt", name))));
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)));
           break;
       }
     } catch (Exception e) {
@@ -291,6 +298,34 @@ public class BesuNodeConfigurationBuilder {
     }
     this.sslConfiguration = Optional.of(builder.build());
     return this;
+  }
+
+  private Path initNSSConfigFile(final Path srcFilePath) {
+    Path ret = null;
+    try {
+      final String content = Files.readString(srcFilePath);
+      final String updated =
+          content.replaceAll(
+              "(nssSecmodDirectory\\W*)(\\.\\/.*)",
+              "$1".concat(srcFilePath.toAbsolutePath().toString().replace("nss.cfg", "nssdb")));
+      final Path targetFilePath = createTemporaryFile("nsscfg");
+      Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
+      ret = targetFilePath;
+    } catch (IOException e) {
+      throw new RuntimeException("Error populating nss config file", e);
+    }
+    return ret;
+  }
+
+  private Path createTemporaryFile(final String suffix) {
+    final File tempFile;
+    try {
+      tempFile = File.createTempFile("temp", suffix);
+      tempFile.deleteOnExit();
+    } catch (IOException e) {
+      throw new RuntimeException("Error creating temporary file", e);
+    }
+    return tempFile.toPath();
   }
 
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {

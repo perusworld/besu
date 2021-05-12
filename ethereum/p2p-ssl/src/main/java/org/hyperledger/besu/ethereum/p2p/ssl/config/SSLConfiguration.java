@@ -25,23 +25,29 @@ public class SSLConfiguration {
   private final String keyStoreType;
   private final Path keyStorePath;
   private final Supplier<String> keyStorePasswordSupplier;
+  private final Path keyStorePasswordPath;
   private final String trustStoreType;
   private final Path trustStorePath;
   private final Supplier<String> trustStorePasswordSupplier;
+  private final Path trustStorePasswordPath;
 
   private SSLConfiguration(
       final String keyStoreType,
       final Path keyStorePath,
       final Supplier<String> keyStorePasswordSupplier,
+      final Path keyStorePasswordPath,
       final String trustStoreType,
       final Path trustStorePath,
-      final Supplier<String> trustStorePasswordSupplier) {
+      final Supplier<String> trustStorePasswordSupplier,
+      final Path trustStorePasswordPath) {
     this.keyStoreType = keyStoreType;
     this.keyStorePath = keyStorePath;
     this.keyStorePasswordSupplier = keyStorePasswordSupplier;
+    this.keyStorePasswordPath = keyStorePasswordPath;
     this.trustStoreType = trustStoreType;
     this.trustStorePath = trustStorePath;
     this.trustStorePasswordSupplier = trustStorePasswordSupplier;
+    this.trustStorePasswordPath = trustStorePasswordPath;
   }
 
   public String getKeyStoreType() {
@@ -56,6 +62,10 @@ public class SSLConfiguration {
     return null == keyStorePasswordSupplier ? null : keyStorePasswordSupplier.get();
   }
 
+  public Path getKeyStorePasswordPath() {
+    return keyStorePasswordPath;
+  }
+
   public String getTrustStoreType() {
     return trustStoreType;
   }
@@ -68,13 +78,19 @@ public class SSLConfiguration {
     return null == trustStorePasswordSupplier ? null : trustStorePasswordSupplier.get();
   }
 
+  public Path getTrustStorePasswordPath() {
+    return trustStorePasswordPath;
+  }
+
   public static final class Builder {
     private String keyStoreType;
     private Path keyStorePath;
     private Supplier<String> keyStorePasswordSupplier;
+    private Path keyStorePasswordPath;
     private String trustStoreType;
     private Path trustStorePath;
     private Supplier<String> trustStorePasswordSupplier;
+    private Path trustStorePasswordPath;
 
     private Builder() {}
 
@@ -89,6 +105,11 @@ public class SSLConfiguration {
 
     public Builder withKeyStorePath(final Path keyStorePath) {
       this.keyStorePath = keyStorePath;
+      return this;
+    }
+
+    public Builder withKeyStorePasswordPath(final Path keyStorePasswordPath) {
+      this.keyStorePasswordPath = keyStorePasswordPath;
       return this;
     }
 
@@ -113,6 +134,11 @@ public class SSLConfiguration {
       return this;
     }
 
+    public Builder withTrustStorePasswordPath(final Path trustStorePasswordPath) {
+      this.trustStorePasswordPath = trustStorePasswordPath;
+      return this;
+    }
+
     public SSLConfiguration build() {
       requireNonNull(keyStoreType, "Key Store Type must not be null");
       requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
@@ -120,9 +146,11 @@ public class SSLConfiguration {
           keyStoreType,
           keyStorePath,
           keyStorePasswordSupplier,
+          keyStorePasswordPath,
           trustStoreType,
           trustStorePath,
-          trustStorePasswordSupplier);
+          trustStorePasswordSupplier,
+          trustStorePasswordPath);
     }
   }
 }
