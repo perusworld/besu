@@ -302,8 +302,8 @@ public class RunnerBuilder {
   }
 
   public RunnerBuilder permissioningConfiguration(
-      final PermissioningConfiguration permissioningConfiguration) {
-    this.permissioningConfiguration = Optional.of(permissioningConfiguration);
+      final Optional<PermissioningConfiguration> permissioningConfiguration) {
+    this.permissioningConfiguration = permissioningConfiguration;
     return this;
   }
 

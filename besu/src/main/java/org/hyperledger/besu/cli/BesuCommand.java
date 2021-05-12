@@ -1238,11 +1238,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
-      final BesuCommand controller = validateOptions().configure().controller();
+      validateOptions();
+      configure();
+      initController();
+      startPlugins();
+      preSynchronization();
+      startSynchronization();
 
-      preSynchronizationTaskRunner.runTasks(controller.besuController);
-
-      controller.startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
@@ -1387,6 +1389,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  private void preSynchronization() {
+    preSynchronizationTaskRunner.runTasks(besuController);
+  }
+
   private void startSynchronization() {
     synchronize(
         besuController,
@@ -1408,7 +1414,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         pidPath);
   }
 
-  private BesuCommand startPlugins() {
+  private void startPlugins() {
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
@@ -1419,7 +1425,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
-    return this;
   }
 
   public void configureLogging(final boolean announce) {
@@ -1447,7 +1452,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private BesuCommand validateOptions() {
+  private void validateOptions() {
     issueOptionWarnings();
 
     validateP2PInterface(p2pInterface);
@@ -1590,7 +1595,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private BesuCommand configure() throws Exception {
+  private void configure() throws Exception {
     checkPortClash();
 
     syncMode =
@@ -1636,7 +1641,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration = metricsConfiguration();
 
     logger.info("Security Module: {}", securityModuleName);
-    return this;
+    instantiateSignatureAlgorithmFactory();
   }
 
   private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
@@ -1695,9 +1700,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private BesuCommand controller() {
+  private void initController() {
     besuController = buildController();
-    return this;
   }
 
   public BesuController buildController() {
@@ -2327,6 +2331,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
+            .permissioningConfiguration(permissioningConfiguration)
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
