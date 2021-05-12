@@ -1454,16 +1454,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateOptions() {
     issueOptionWarnings();
-
     validateP2PInterface(p2pInterface);
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
-
     checkP2PSSLOptionsDependencies();
-
-    return this;
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -2317,7 +2313,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     checkNotNull(runnerBuilder);
 
-    permissioningConfiguration.ifPresent(runnerBuilder::permissioningConfiguration);
     p2pSSLConfiguration.ifPresent(runnerBuilder::p2pSSLConfiguration);
 
     final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
