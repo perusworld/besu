@@ -143,6 +143,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -154,6 +155,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
@@ -262,6 +264,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
+  private final PermissioningServiceImpl permissioningService;
+
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
@@ -1180,7 +1184,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuPluginContext,
         environment,
         new StorageServiceImpl(),
-        new SecurityModuleServiceImpl());
+        new SecurityModuleServiceImpl(),
+        new PermissioningServiceImpl());
   }
 
   @VisibleForTesting
@@ -1194,7 +1199,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
       final StorageServiceImpl storageService,
-      final SecurityModuleServiceImpl securityModuleService) {
+      final SecurityModuleServiceImpl securityModuleService,
+      final PermissioningServiceImpl permissioningService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1205,7 +1211,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.environment = environment;
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
-
+    this.permissioningService = permissioningService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -1328,6 +1334,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
+    besuPluginContext.addService(PermissioningService.class, permissioningService);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -1733,6 +1740,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
+        .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
@@ -2345,6 +2353,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)
+            .permissioningService(permissioningService)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
             .identityString(identityString)
