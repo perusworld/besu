@@ -12,18 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.besu.pki.keystore;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  CALAVERAS,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  ECIP1049_DEV,
-  ASTOR
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+
+public interface KeyStoreWrapper {
+
+  String KEYSTORE_TYPE_JKS = "JKS";
+  String KEYSTORE_TYPE_PKCS11 = "PKCS11";
+  String KEYSTORE_TYPE_PKCS12 = "PKCS12";
+
+  KeyStore getKeyStore();
+
+  KeyStore getTrustStore();
+
+  PrivateKey getPrivateKey(String keyAlias);
+
+  PublicKey getPublicKey(String keyAlias);
+
+  Certificate getCertificate(String certificateAlias);
+
+  Certificate[] getCertificateChain(String certificateAlias);
 }

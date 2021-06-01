@@ -12,18 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.besu.pki;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  CALAVERAS,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  ECIP1049_DEV,
-  ASTOR
+public class PkiException extends RuntimeException {
+
+  private static final long serialVersionUID = 1L;
+
+  public PkiException() {
+    super();
+  }
+
+  public PkiException(final String message) {
+    super(message);
+  }
+
+  public PkiException(final String message, final Throwable t) {
+    super(message, t);
+  }
+
+  public PkiException(final Throwable t) {
+    super(t);
+  }
 }
