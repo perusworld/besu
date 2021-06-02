@@ -24,9 +24,10 @@ import org.junit.runners.Parameterized;
 
 public class SoftwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
 
-  private static final String p12KeyStore = "/keys/partner1client1/partner1client1.p12";
-  private static final String jksKeyStore = "/keys/partner1client1/partner1client1.jks";
-  private static final String trustStore = "/keys/partner1client1/partner1client1-truststore.jks";
+  private static final String p12KeyStore = "/keys/partner1client1/keys.p12";
+  private static final String jksKeyStore = "/keys/partner1client1/keystore.jks";
+  private static final String trustStore = "/keys/partner1client1/truststore.jks";
+  private static final String crl = "/keys/partner1client1/crl.pem";
   private static final String validKeystorePassword = "test123";
 
   @Parameterized.Parameters(name = "{index}: {0}")
@@ -54,7 +55,10 @@ public class SoftwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
   private static KeyStoreWrapper getPKCS12SoftwareKeyStoreWrapper() {
     try {
       return new SoftwareKeyStoreWrapper(
-          KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, toPath(p12KeyStore), validKeystorePassword);
+          KeyStoreWrapper.KEYSTORE_TYPE_PKCS12,
+          toPath(p12KeyStore),
+          validKeystorePassword,
+          toPath(crl));
     } catch (final Exception e) {
       throw new CryptoRuntimeException("Failed to initialize software keystore", e);
     }
@@ -72,10 +76,11 @@ public class SoftwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
             validKeystorePassword,
             KeyStoreWrapper.KEYSTORE_TYPE_JKS,
             truststoreLocation,
-            null);
+            null,
+            toPath(crl));
       }
       return new SoftwareKeyStoreWrapper(
-          KeyStoreWrapper.KEYSTORE_TYPE_JKS, keystoreLocation, validKeystorePassword);
+          KeyStoreWrapper.KEYSTORE_TYPE_JKS, keystoreLocation, validKeystorePassword, toPath(crl));
     } catch (final Exception e) {
       throw new CryptoRuntimeException("Failed to initialize software keystore", e);
     }

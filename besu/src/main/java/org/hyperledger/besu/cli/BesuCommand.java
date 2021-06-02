@@ -1148,6 +1148,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "File containing password to unlock truststore for the P2P service.")
   private final Path p2pSSLTrustStorePasswordFile = null;
 
+  @Option(
+      names = {"--p2p-ssl-crl-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Certificate revocation list for the P2P service.")
+  private final Path p2pCrlFile = null;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -2644,6 +2650,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     ? null
                     : new FileBasedPasswordProvider(p2pSSLTrustStorePasswordFile))
             .withTrustStorePasswordPath(p2pSSLTrustStorePasswordFile)
+            .withCrlPath(p2pCrlFile)
             .build());
   }
 

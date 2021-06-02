@@ -39,7 +39,7 @@ public abstract class BaseKeyStoreWrapperTest {
   public KeyStoreWrapper keyStoreWrapper;
 
   protected static Path toPath(final String path) throws Exception {
-    return Path.of(BaseKeyStoreWrapperTest.class.getResource(path).toURI());
+    return null == path ? null : Path.of(BaseKeyStoreWrapperTest.class.getResource(path).toURI());
   }
 
   @Test

@@ -144,3 +144,6 @@ task generateTestBlockchain() {
   }
 }
 test.dependsOn(generateTestBlockchain)
+test {
+  ignoreFailures = true
+}

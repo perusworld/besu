@@ -265,6 +265,7 @@ public class BesuNodeConfigurationBuilder {
     try {
       final String nsspin = "/p2p-ssl/%s/nsspin.txt";
       final String truststore = "/p2p-ssl/%s/truststore.jks";
+      final String crl = "/p2p-ssl/%s/crl.pem";
       switch (type) {
         case KeyStoreWrapper.KEYSTORE_TYPE_JKS:
           builder
@@ -277,7 +278,8 @@ public class BesuNodeConfigurationBuilder {
               .withTrustStorePath(toPath(String.format(truststore, name)))
               .withTrustStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)));
+              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withCrlPath(toPath(String.format(crl, name)));
           break;
         case KeyStoreWrapper.KEYSTORE_TYPE_PKCS12:
           builder
@@ -290,7 +292,8 @@ public class BesuNodeConfigurationBuilder {
               .withTrustStorePath(toPath(String.format(truststore, name)))
               .withTrustStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)));
+              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withCrlPath(toPath(String.format(crl, name)));
           break;
         case KeyStoreWrapper.KEYSTORE_TYPE_PKCS11:
           builder
@@ -299,7 +302,8 @@ public class BesuNodeConfigurationBuilder {
                   initNSSConfigFile(toPath(String.format("/p2p-ssl/%s/nss.cfg", name))))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)));
+              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withCrlPath(toPath(String.format(crl, name)));
           break;
       }
     } catch (Exception e) {

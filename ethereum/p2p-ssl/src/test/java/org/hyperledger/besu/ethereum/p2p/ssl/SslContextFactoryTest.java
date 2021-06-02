@@ -57,20 +57,26 @@ public class SslContextFactoryTest {
 
   private static final String JKS = "JKS";
   private static final String validKeystorePassword = "test123";
-  private static final String partner1client1PKCS11Config =
-      "/keys/partner1client1/partner1client1.cfg";
-  private static final String partner1client1JKSKeystore =
-      "/keys/partner1client1/partner1client1.jks";
-  private static final String partner1client1JKSTruststore =
-      "/keys/partner1client1/partner1client1-truststore.jks";
-  private static final String partner2client1JKSKeystore =
-      "/keys/partner2client1/partner2client1.jks";
-  private static final String partner2client1JKSTruststore =
-      "/keys/partner2client1/partner2client1-truststore.jks";
+  private static final String partner1client1PKCS11Config = "/keys/partner1client1/nss.cfg";
+  private static final String partner1client1JKSKeystore = "/keys/partner1client1/keystore.jks";
+  private static final String partner1client1JKSTruststore = "/keys/partner1client1/truststore.jks";
+  private static final String partner1client1CRL = "/keys/partner1client1/crl.pem";
+  private static final String partner1client2rvkJKSKeystore =
+      "/keys/partner1client2rvk/keystore.jks";
+  private static final String partner1client2rvkJKSTruststore =
+      "/keys/partner1client2rvk/truststore.jks";
+  private static final String partner2client1JKSKeystore = "/keys/partner2client1/keystore.jks";
+  private static final String partner2client1JKSTruststore = "/keys/partner2client1/truststore.jks";
+  private static final String partner2client1CRL = "/keys/partner2client1/crl.pem";
   private static final String invalidPartner1client1JKSKeystore =
-      "/keys/invalidpartner1client1/invalidpartner1client1.jks";
+      "/keys/invalidpartner1client1/keystore.jks";
   private static final String invalidPartner1client1JKSTruststore =
-      "/keys/invalidpartner1client1/invalidpartner1client1-truststore.jks";
+      "/keys/invalidpartner1client1/truststore.jks";
+  private static final String invalidPartner1client1CRL = "/keys/invalidpartner1client1/crl.pem";
+  private static final String partner2client2rvkJKSKeystore =
+      "/keys/partner2client2rvk/keystore.jks";
+  private static final String partner2client2rvkJKSTruststore =
+      "/keys/partner2client2rvk/truststore.jks";
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -98,41 +104,93 @@ public class SslContextFactoryTest {
           {
             "JKS serverPartner1Client1 -> JKS clientPartner2Client1 SuccessfulConnection",
             true,
-            getSoftwareKeyStoreWrapper(partner1client1JKSKeystore, partner1client1JKSTruststore),
-            getSoftwareKeyStoreWrapper(partner2client1JKSKeystore, partner2client1JKSTruststore)
+            getSoftwareKeyStoreWrapper(
+                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
           },
           {
             "JKS serverPartner2Client1 -> JKS clientPartner1Client1 SuccessfulConnection",
             true,
-            getSoftwareKeyStoreWrapper(partner2client1JKSKeystore, partner2client1JKSTruststore),
-            getSoftwareKeyStoreWrapper(partner1client1JKSKeystore, partner1client1JKSTruststore)
+            getSoftwareKeyStoreWrapper(
+                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
           },
           {
             "PKCS11 serverPartner1Client1 -> JKS clientPartner2Client1 SuccessfulConnection",
             true,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config),
-            getSoftwareKeyStoreWrapper(partner2client1JKSKeystore, partner2client1JKSTruststore)
+            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
           },
           {
             "JKS serverPartner1Client1 -> JKS clientInvalidPartner1Client1 FailedConnection",
             false,
-            getSoftwareKeyStoreWrapper(partner1client1JKSKeystore, partner1client1JKSTruststore),
             getSoftwareKeyStoreWrapper(
-                invalidPartner1client1JKSKeystore, invalidPartner1client1JKSTruststore)
+                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                invalidPartner1client1JKSKeystore,
+                invalidPartner1client1JKSTruststore,
+                invalidPartner1client1CRL)
           },
           {
             "JKS serverInvalidPartner1Client1 -> JKS clientPartner1Client1 FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
-                invalidPartner1client1JKSKeystore, invalidPartner1client1JKSTruststore),
-            getSoftwareKeyStoreWrapper(partner1client1JKSKeystore, partner1client1JKSTruststore)
+                invalidPartner1client1JKSKeystore,
+                invalidPartner1client1JKSTruststore,
+                invalidPartner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
           },
           {
             "PKCS11 serverPartner1Client1 -> JKS clientInvalidPartner1Client1 FailedConnection",
             false,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config),
+            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
             getSoftwareKeyStoreWrapper(
-                invalidPartner1client1JKSKeystore, invalidPartner1client1JKSTruststore)
+                invalidPartner1client1JKSKeystore,
+                invalidPartner1client1JKSTruststore,
+                invalidPartner1client1CRL)
+          },
+          {
+            "JKS serverPartner1Client2rvk -> JKS clientPartner2Client1 FailedConnection",
+            false,
+            getSoftwareKeyStoreWrapper(
+                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null),
+            getSoftwareKeyStoreWrapper(
+                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
+          },
+          {
+            "JKS serverPartner2Client1 -> JKS clientPartner1Client2rvk FailedConnection",
+            false,
+            getSoftwareKeyStoreWrapper(
+                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null)
+          },
+          {
+            "PKCS11 serverPartner1Client1 -> JKS clientPartner1Client2rvk FailedConnection",
+            false,
+            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null)
+          },
+          {
+            "JKS serverPartner2Client2rvk -> JKS clientPartner1Client1 FailedConnection",
+            false,
+            getSoftwareKeyStoreWrapper(
+                partner2client2rvkJKSKeystore, partner2client2rvkJKSTruststore, null),
+            getSoftwareKeyStoreWrapper(
+                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
+          },
+          {
+            "JKS serverPartner1Client1 -> JKS clientPartner2Client2rvk FailedConnection",
+            false,
+            getSoftwareKeyStoreWrapper(
+                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner2client2rvkJKSKeystore, partner2client2rvkJKSTruststore, null)
           }
         });
   }
@@ -154,22 +212,30 @@ public class SslContextFactoryTest {
   }
 
   private static Path toPath(final String path) throws Exception {
-    return Path.of(SslContextFactoryTest.class.getResource(path).toURI());
+    return null == path ? null : Path.of(SslContextFactoryTest.class.getResource(path).toURI());
   }
 
-  private static KeyStoreWrapper getHardwareKeyStoreWrapper(final String config) {
+  private static KeyStoreWrapper getHardwareKeyStoreWrapper(
+      final String config, final String crlLocation) {
     try {
-      return new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config));
+      return new HardwareKeyStoreWrapper(
+          validKeystorePassword, toPath(config), toPath(crlLocation));
     } catch (Exception e) {
       throw new CryptoRuntimeException("Failed to initialize hardware keystore", e);
     }
   }
 
   private static KeyStoreWrapper getSoftwareKeyStoreWrapper(
-      final String jksKeyStore, final String trustStore) {
+      final String jksKeyStore, final String trustStore, final String crl) {
     try {
       return new SoftwareKeyStoreWrapper(
-          JKS, toPath(jksKeyStore), validKeystorePassword, JKS, toPath(trustStore), null);
+          JKS,
+          toPath(jksKeyStore),
+          validKeystorePassword,
+          JKS,
+          toPath(trustStore),
+          null,
+          toPath(crl));
     } catch (Exception e) {
       throw new CryptoRuntimeException("Failed to initialize software keystore", e);
     }

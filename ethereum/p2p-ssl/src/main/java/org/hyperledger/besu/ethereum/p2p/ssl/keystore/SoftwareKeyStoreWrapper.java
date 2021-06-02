@@ -25,18 +25,25 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509CRL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
 
+  private static final String X_509 = "X.509";
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final KeyStore keystore;
   private final transient char[] keystorePassword;
+  private final Collection<X509CRL> crls;
   private KeyStore truststore;
   private transient char[] truststorePassword;
 
@@ -45,8 +52,11 @@ public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
   private final Map<String, Certificate> cachedCertificates = new HashMap<>();
 
   public SoftwareKeyStoreWrapper(
-      final String keystoreType, final Path keystoreLocation, final String keystorePassword) {
-    this(keystoreType, keystoreLocation, keystorePassword, null, null, null);
+      final String keystoreType,
+      final Path keystoreLocation,
+      final String keystorePassword,
+      final Path crlLocation) {
+    this(keystoreType, keystoreLocation, keystorePassword, null, null, null, crlLocation);
   }
 
   public SoftwareKeyStoreWrapper(
@@ -55,7 +65,8 @@ public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
       final String keystorePassword,
       final String truststoreType,
       final Path truststoreLocation,
-      final String truststorePassword) {
+      final String truststorePassword,
+      final Path crlLocation) {
 
     if (keystorePassword == null) {
       throw new IllegalArgumentException("Keystore password is null");
@@ -80,6 +91,20 @@ public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
       } catch (final Exception e) {
         throw new CryptoRuntimeException(
             "Failed to initialize software truststore: " + truststoreLocation, e);
+      }
+    }
+
+    if (null == crlLocation) {
+      this.crls = null;
+    } else {
+      try (InputStream stream = new FileInputStream(crlLocation.toFile())) {
+        this.crls =
+            CertificateFactory.getInstance(X_509).generateCRLs(stream).stream()
+                .map(X509CRL.class::cast)
+                .collect(Collectors.toList());
+      } catch (final Exception e) {
+        throw new CryptoRuntimeException(
+            "Failed to initialize software truststore: " + crlLocation, e);
       }
     }
   }
@@ -200,5 +225,10 @@ public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
 
     LOG.warn("Key alias: {} not found in keystore/truststore", keyAlias);
     return null;
+  }
+
+  @Override
+  public Collection<X509CRL> getCRLs() {
+    return crls;
   }
 }

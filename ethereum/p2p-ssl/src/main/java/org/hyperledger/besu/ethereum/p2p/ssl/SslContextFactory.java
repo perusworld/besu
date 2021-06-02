@@ -24,12 +24,18 @@ import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
@@ -51,6 +57,7 @@ public class SslContextFactory {
 
   private KeyManagerFactory kmf;
   private TrustManagerFactory tmf;
+  private Collection<X509CRL> crls;
 
   protected SslContextFactory() {}
 
@@ -62,6 +69,7 @@ public class SslContextFactory {
       throws GeneralSecurityException, IOException {
     kmf = getKeyManagerFactory(keystoreWrapper.getKeyStore(), keystorePass);
     tmf = getTrustManagerFactory(keystoreWrapper.getTrustStore());
+    crls = keystoreWrapper.getCRLs();
   }
 
   public static SslContextFactory getInstance(
@@ -155,8 +163,56 @@ public class SslContextFactory {
    */
   public SSLContext createJavaSslContext() throws NoSuchAlgorithmException, KeyManagementException {
     final SSLContext context = SSLContext.getInstance(getTlsProtocol());
-    context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+    context.init(
+        kmf.getKeyManagers(),
+        null == crls || crls.isEmpty() ? tmf.getTrustManagers() : wrap(tmf.getTrustManagers()),
+        null);
     return context;
+  }
+
+  protected TrustManager[] wrap(final TrustManager[] trustMgrs) {
+    final TrustManager[] ret = trustMgrs.clone();
+    for (int i = 0; i < ret.length; i++) {
+      TrustManager trustMgr = ret[i];
+      if (trustMgr instanceof X509TrustManager) {
+        X509TrustManager x509TrustManager = (X509TrustManager) trustMgr;
+        ret[i] =
+            new X509TrustManager() {
+              @Override
+              public void checkClientTrusted(
+                  final X509Certificate[] x509Certificates, final String s)
+                  throws CertificateException {
+                checkRevoked(x509Certificates);
+                x509TrustManager.checkClientTrusted(x509Certificates, s);
+              }
+
+              @Override
+              public void checkServerTrusted(
+                  final X509Certificate[] x509Certificates, final String s)
+                  throws CertificateException {
+                checkRevoked(x509Certificates);
+                x509TrustManager.checkServerTrusted(x509Certificates, s);
+              }
+
+              private void checkRevoked(final X509Certificate[] x509Certificates)
+                  throws CertificateException {
+                for (X509CRL crl : crls) {
+                  for (X509Certificate cert : x509Certificates) {
+                    if (crl.isRevoked(cert)) {
+                      throw new CertificateException("Certificate revoked");
+                    }
+                  }
+                }
+              }
+
+              @Override
+              public X509Certificate[] getAcceptedIssuers() {
+                return x509TrustManager.getAcceptedIssuers();
+              }
+            };
+      }
+    }
+    return ret;
   }
 
   protected TrustManagerFactory getTrustManagerFactory(final KeyStore truststore)
@@ -228,14 +284,16 @@ public class SslContextFactory {
       LOG.info("Initializing SSL Context using {} keystore.", config.getKeyStoreType());
       KeyStoreWrapper wrapper =
           KeyStoreWrapper.KEYSTORE_TYPE_PKCS11.equalsIgnoreCase(config.getKeyStoreType())
-              ? new HardwareKeyStoreWrapper(config.getKeyStorePassword(), config.getKeyStorePath())
+              ? new HardwareKeyStoreWrapper(
+                  config.getKeyStorePassword(), config.getKeyStorePath(), config.getCrlPath())
               : new SoftwareKeyStoreWrapper(
                   config.getKeyStoreType(),
                   config.getKeyStorePath(),
                   config.getKeyStorePassword(),
                   config.getTrustStoreType(),
                   config.getTrustStorePath(),
-                  config.getTrustStorePassword());
+                  config.getTrustStorePassword(),
+                  config.getCrlPath());
       ret = SslContextFactory.getInstance(config.getKeyStorePassword(), wrapper, null, null, null);
     }
     return ret;

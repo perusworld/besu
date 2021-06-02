@@ -26,8 +26,12 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509CRL;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,15 +44,19 @@ import org.apache.logging.log4j.Logger;
  */
 public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
 
+  private static final String X_509 = "X.509";
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final KeyStore keystore;
   private final transient char[] keystorePassword;
   private final String pkcs11Provider = "SunPKCS11";
+  private final Collection<X509CRL> crls;
 
   private final java.security.Provider provider;
 
-  public HardwareKeyStoreWrapper(final String keystorePassword, final Provider provider) {
+  public HardwareKeyStoreWrapper(
+      final String keystorePassword, final Provider provider, final Path crlLocation) {
     try {
       if (provider == null) {
         throw new IllegalArgumentException("Provider is null");
@@ -63,12 +71,27 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
       keystore = KeyStore.getInstance(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, provider);
       keystore.load(null, this.keystorePassword);
 
+      if (null == crlLocation) {
+        this.crls = null;
+      } else {
+        try (InputStream stream = new FileInputStream(crlLocation.toFile())) {
+          this.crls =
+              CertificateFactory.getInstance(X_509).generateCRLs(stream).stream()
+                  .map(X509CRL.class::cast)
+                  .collect(Collectors.toList());
+        } catch (final Exception e) {
+          throw new CryptoRuntimeException(
+              "Failed to initialize software truststore: " + crlLocation, e);
+        }
+      }
+
     } catch (final Exception e) {
       throw new CryptoRuntimeException("Failed to initialize HSM keystore", e);
     }
   }
 
-  public HardwareKeyStoreWrapper(final String keystorePassword, final Path config) {
+  public HardwareKeyStoreWrapper(
+      final String keystorePassword, final Path config, final Path crlLocation) {
     try {
       if (keystorePassword == null) {
         throw new IllegalArgumentException("Keystore password is null");
@@ -94,6 +117,19 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
       keystore = KeyStore.getInstance(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, provider);
       keystore.load(null, this.keystorePassword);
 
+      if (null == crlLocation) {
+        this.crls = null;
+      } else {
+        try (InputStream stream = new FileInputStream(crlLocation.toFile())) {
+          this.crls =
+              CertificateFactory.getInstance(X_509).generateCRLs(stream).stream()
+                  .map(X509CRL.class::cast)
+                  .collect(Collectors.toList());
+        } catch (final Exception e) {
+          throw new CryptoRuntimeException(
+              "Failed to initialize software truststore: " + crlLocation, e);
+        }
+      }
     } catch (final Exception e) {
       throw new CryptoRuntimeException("Failed to initialize HSM keystore", e);
     }
@@ -158,5 +194,10 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
     } else {
       return provider.configure(config);
     }
+  }
+
+  @Override
+  public Collection<X509CRL> getCRLs() {
+    return crls;
   }
 }

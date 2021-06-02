@@ -31,7 +31,8 @@ import org.junit.runners.Parameterized;
 
 public class HardwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
 
-  private static final String config = "/keys/partner1client1/partner1client1.cfg";
+  private static final String config = "/keys/partner1client1/nss.cfg";
+  private static final String crl = "/keys/partner1client1/crl.pem";
   private static final String configName = "NSScrypto-partner1client1";
   private static final String validKeystorePassword = "test123";
 
@@ -50,13 +51,14 @@ public class HardwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
   private static KeyStoreWrapper getHardwareKeyStoreWrapper(final String cfgName) {
     try {
       final Path path = toPath(config);
+      final Path crlPath = toPath(crl);
       final Optional<Provider> existingProvider =
           Stream.of(Security.getProviders())
               .filter(p -> p.getName().equals("SunPKCS11" + cfgName))
               .findAny();
       return existingProvider
-          .map(provider -> new HardwareKeyStoreWrapper(validKeystorePassword, provider))
-          .orElseGet(() -> new HardwareKeyStoreWrapper(validKeystorePassword, path));
+          .map(provider -> new HardwareKeyStoreWrapper(validKeystorePassword, provider, crlPath))
+          .orElseGet(() -> new HardwareKeyStoreWrapper(validKeystorePassword, path, crlPath));
     } catch (final Exception e) {
       throw new CryptoRuntimeException("Failed to initialize NSS keystore", e);
     }
@@ -78,23 +80,23 @@ public class HardwareKeyStoreWrapperTest extends BaseKeyStoreWrapperTest {
 
   @Test
   public void init_keystorePassword_config() throws Exception {
-    new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config));
+    new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config), toPath(crl));
   }
 
   @Test(expected = NullPointerException.class)
   public void init_keystorePassword_config_invalid() throws Exception {
     final String config = "invalid";
-    new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config));
+    new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config), toPath(crl));
   }
 
   @Test(expected = CryptoRuntimeException.class)
   public void init_keystorePassword_config_missing_pw() throws Exception {
-    new HardwareKeyStoreWrapper(null, toPath(config));
+    new HardwareKeyStoreWrapper(null, toPath(config), toPath(crl));
   }
 
   @Test(expected = CryptoRuntimeException.class)
   public void init_keystorePassword_provider_missing_pw() throws Exception {
     final Provider p = null;
-    new HardwareKeyStoreWrapper(validKeystorePassword, p);
+    new HardwareKeyStoreWrapper(validKeystorePassword, p, toPath(crl));
   }
 }

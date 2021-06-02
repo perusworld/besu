@@ -30,6 +30,7 @@ public class SSLConfiguration {
   private final Path trustStorePath;
   private final Supplier<String> trustStorePasswordSupplier;
   private final Path trustStorePasswordPath;
+  private final Path crlPath;
 
   private SSLConfiguration(
       final String keyStoreType,
@@ -39,7 +40,8 @@ public class SSLConfiguration {
       final String trustStoreType,
       final Path trustStorePath,
       final Supplier<String> trustStorePasswordSupplier,
-      final Path trustStorePasswordPath) {
+      final Path trustStorePasswordPath,
+      final Path crlPath) {
     this.keyStoreType = keyStoreType;
     this.keyStorePath = keyStorePath;
     this.keyStorePasswordSupplier = keyStorePasswordSupplier;
@@ -48,6 +50,7 @@ public class SSLConfiguration {
     this.trustStorePath = trustStorePath;
     this.trustStorePasswordSupplier = trustStorePasswordSupplier;
     this.trustStorePasswordPath = trustStorePasswordPath;
+    this.crlPath = crlPath;
   }
 
   public String getKeyStoreType() {
@@ -82,6 +85,10 @@ public class SSLConfiguration {
     return trustStorePasswordPath;
   }
 
+  public Path getCrlPath() {
+    return crlPath;
+  }
+
   public static final class Builder {
     private String keyStoreType;
     private Path keyStorePath;
@@ -91,6 +98,7 @@ public class SSLConfiguration {
     private Path trustStorePath;
     private Supplier<String> trustStorePasswordSupplier;
     private Path trustStorePasswordPath;
+    private Path crlPath;
 
     private Builder() {}
 
@@ -139,6 +147,11 @@ public class SSLConfiguration {
       return this;
     }
 
+    public Builder withCrlPath(final Path crlPath) {
+      this.crlPath = crlPath;
+      return this;
+    }
+
     public SSLConfiguration build() {
       requireNonNull(keyStoreType, "Key Store Type must not be null");
       requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
@@ -150,7 +163,8 @@ public class SSLConfiguration {
           trustStoreType,
           trustStorePath,
           trustStorePasswordSupplier,
-          trustStorePasswordPath);
+          trustStorePasswordPath,
+          crlPath);
     }
   }
 }
