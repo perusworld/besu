@@ -85,7 +85,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private static final Logger LOG = getLogger();
 
   private final Path homeDirectory;
-  private final KeyPair keyPair;
+  private KeyPair keyPair;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
   private final Optional<SSLConfiguration> sslConfiguration;
@@ -144,7 +144,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> staticNodes,
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
-      final List<String> runCommand)
+      final List<String> runCommand,
+      final Optional<KeyPair> keyPair)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
@@ -155,7 +156,12 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
             LOG.error("Could not find key file \"{}\" in resources", path);
           }
         });
-    this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
+    keyPair.ifPresentOrElse(
+        (existingKeyPair) -> {
+          this.keyPair = existingKeyPair;
+          KeyPairUtil.storeKeyFile(existingKeyPair, homeDirectory);
+        },
+        () -> this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory));
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
